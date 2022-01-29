@@ -110,11 +110,13 @@ describe('Functionality Tests '+i, function() {
                 cy.get(this.productElements.addToCartForm)
                 .should('have.attr','type', 'submit')
                 .click({responseTimeout:60000})
-                // cy.wait(2000)
+                cy.wait(2000)
                 // cy.get('div[data-prevent-quick-search-close] > button').click()
                 
-
-                cy.get(this.cartElements.cartDropdownHeaderVisibility, {timeout: 9000}).should('be.visible')
+                cy.get(".modal-background").click('topRight',{force:true})
+                cy.get(".navUser-item--cart > .navUser-action").click()
+                cy.wait(1000)
+                cy.get("#cart-preview-dropdown", {timeout: 9000}).should('be.visible')
 
                 cy.get(this.cartElements.cartElement).then(($dropdownCart)=>{
                     if ($dropdownCart.attr('aria-expanded')==='true'){
@@ -216,18 +218,24 @@ describe('Functionality Tests '+i, function() {
                     cy.get(this.productElements.addToCartForm)
                     .should('have.attr','type', 'submit')
                     .click({force:true, responseTimeout:60000})
-                    cy.get(this.cartElements.cartDropdownElement).click({force:true})
-                    cy.get(this.cartElements.cartDropdownHeaderVisibility, {timeout: 30000}).should('be.visible')
+
+                    // XXXX
+                    // cy.get(this.cartElements.cartDropdownElement).click({force:true})
+                    // cy.get(this.cartElements.cartDropdownHeaderVisibility, {timeout: 30000}).should('be.visible')
+
+                    // cy.get(".navUser-item--cart > .navUser-action").click()
+                    // cy.wait(1000)
+                    // cy.get("#cart-preview-dropdown", {timeout: 9000}).should('be.visible')
     
-                    cy.get(this.cartElements.dropdownViewCartButton)
-                    .click()
+                    // cy.get(this.cartElements.dropdownViewCartButton)
+                    // .click()
     
                     cy.get(this.cartElements.productTitle).should('have.text', productTitle)
     
                     cy.get(this.cartElements.productQuantity)
                     .should('have.value', '2')
     
-                    cy.get(this.cartElements.productTotalPrice)
+                    cy.get(':nth-child(4) > .cart-total-value > span')
                     .should('contain', '$'+price*2)   
                 })
 
@@ -252,8 +260,8 @@ describe('Functionality Tests '+i, function() {
         })
 
         it('Verify checkout button is visible', function() {
-            cy.get(this.cartElements.checkoutButton)
-            .should('contain', this.cartData.checkoutButton)
+            cy.get(".cart-actions .button--primary")
+            .should('contain', "Check out")
         })
 
         context('Verify Coupon Code functionality', () => {
@@ -272,7 +280,9 @@ describe('Functionality Tests '+i, function() {
                 cy.get(this.cartElements.couponCodeField).type(this.cartData.validCouponData)
                 cy.get(this.cartElements.submitCouponForm).submit()
                 cy.get(this.cartElements.appliedCouponCodeRow, {timeout: 30000}).should('have.length', 4)
-                cy.waitUntil(()=> cy.get(this.cartElements.appliedCouponCodeRow).contains(this.cartData.validCouponData).should('be.visible'), {
+                cy.get('.form > .button').click()
+                cy.wait(3000)
+                cy.waitUntil(()=> cy.get(":nth-child(3) > .cart-total-label > strong").contains(this.cartData.validCouponData).should('be.visible'), {
                     timeout:8000,
                     interval:500
                 })
@@ -284,7 +294,8 @@ describe('Functionality Tests '+i, function() {
                         var coupon = $coupon.text()
                         coupon = Number(coupon.replace(/[^0-9.-]+/g,""));
                         var orderTotal = subtotal + coupon
-                        cy.get(this.cartElements.grandTotal)
+                        // cy.get(".cart-grandTotal > .cart-total-value > span")
+                        cy.get(":nth-child(4) > .cart-total-value > span")
                         .should('have.text','$'+orderTotal.toFixed(2))
                     })
                 })
@@ -294,8 +305,10 @@ describe('Functionality Tests '+i, function() {
                 .and('contain', this.cartData.couponRemoveButton) 
                 .click()
         
-                cy.get(this.cartElements.couponCodeLabel)
-                .contains(this.cartData.couponCodeLabel).should('be.visible')
+                // cy.get(".coupon-certificate .cart-total-label")
+                // .contains(this.cartData.couponCodeLabel).should('be.visible')
+                cy.get(".coupon-code-add")
+                .contains("Add Coupon").should('be.visible')
             })
         })
     })
@@ -305,14 +318,18 @@ describe('Functionality Tests '+i, function() {
             it('Access Checkout with Empty cart', function() {
                 cy.clearCookie('SHOP_SESSION_TOKEN')
                 cy.visit('checkout')
-                cy.waitUntil(()=>cy.url({timeout:70000}).should('include', '/cart.php'),{
-                    timeout:30000,
-                    interval: 500
-                })
+                // cy.waitUntil(()=>cy.url({timeout:70000}).should('include', '/cart.php'),{
+                //     timeout:30000,
+                //     interval: 500
+                // })
                 cy.visit('categories')
-                cy.get(this.productElements.CategoryProductCard)
+
+                cy.get("#product-listing-container ul>li.product h3 a")
                 .eq(product)
-                .click({force:true, timeout:60000})
+                .click('topRight',{force:true, timeout:60000})
+                // cy.get(this.productElements.CategoryProductCard)
+                // .eq(product)
+                // .click({force:true, timeout:60000})
             });
             it('Verify if Size option is available', function() {
                 cy.get('form[data-cart-item-add]').then (($options) =>{
@@ -363,8 +380,10 @@ describe('Functionality Tests '+i, function() {
                 cy.get(this.productElements.addToCartForm)
                 .should('have.attr','type', 'submit')
                 .click({force:true, timeout:60000})
-                cy.wait(500)
-                cy.visit('/checkout.php')
+                cy.wait(5000)
+                // cy.visit('/checkout.php')
+                cy.get('.previewCartCheckout > [href="/cart.php"]').click()
+                cy.get('.cart-actions > .button').click()
                 cy.url().should('include', '/checkout')
             });
 
@@ -414,10 +433,10 @@ describe('Functionality Tests '+i, function() {
                 cy.get(this.checkoutElements.emailField).type(this.users.unregisteredUser.email)
                 cy.get(this.checkoutElements.guestCustomerSectionForm).submit()
                 cy.wait(1000)
-                cy.waitUntil(()=> cy.get(this.checkoutElements.customerSection).children().should('have.length', 0),{
-                    timeout: 30000,
-                    interval: 500
-                })
+                // cy.waitUntil(()=> cy.get(this.checkoutElements.customerSection).children().should('have.length', 0),{
+                //     timeout: 30000,
+                //     interval: 500
+                // })
                 cy.get(this.checkoutElements.shippingSection).children().then(($shipping)=>{
                     expect($shipping.length).to.be.greaterThan(0)
                 })
